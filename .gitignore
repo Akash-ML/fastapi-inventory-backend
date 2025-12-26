@@ -1,0 +1,8 @@
+# Virtual environments
+fastapi-proj/
+venv/
+.env/
+
+# Python cache
+__pycache__/
+*.pyc
