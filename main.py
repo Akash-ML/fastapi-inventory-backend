@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends
+from fastapi.middleware.cors import CORSMiddleware
 from models import Product
 from sqlalchemy.orm import Session
 
@@ -8,8 +9,13 @@ from database import session, engine
 
 app = FastAPI()
 
-database_models.Base.metadata.create_all(bind=engine)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_methods=["*"]
+)
 
+database_models.Base.metadata.create_all(bind=engine)
 
 products = [
     Product(id=1, name="phone", description="budget phone", price=15000, quantity=25),
@@ -18,7 +24,6 @@ products = [
     Product(id=4, name="tablet", description="budget tablet", price=18000, quantity=15),
     Product(id=5, name="laptop", description="gaming laptop", price=75000, quantity=5)
 ]
-
 
 def get_db():
     db = session()
@@ -77,7 +82,7 @@ def update_product(id: int, product: Product, db: Session = Depends(get_db)):
         return "Id not found"
 
     # To maintain the original id
-    updated_row_count = db.query(database_models.Product).filter(database_models.Product.id == id).update(product.model_dump())
+    db.query(database_models.Product).filter(database_models.Product.id == id).update(product.model_dump())
     db_product.id = id
     
     db.commit()
