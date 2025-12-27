@@ -6,3 +6,9 @@ venv/
 # Python cache
 __pycache__/
 *.pyc
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
