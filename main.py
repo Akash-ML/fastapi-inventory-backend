@@ -1,5 +1,6 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from models import Product
+from sqlalchemy.orm import Session
 
 import database_models
 from database import session, engine
@@ -18,6 +19,15 @@ products = [
     Product(id=5, name="laptop", description="gaming laptop", price=75000, quantity=5)
 ]
 
+
+def get_db():
+    db = session()
+
+    try:
+        yield db
+    finally:
+        db.close
+
 def init_db():
     db = session()
 
@@ -29,51 +39,56 @@ def init_db():
 
         db.commit()
 
-init_db()
+    db.close()
 
+init_db()
 
 @app.get("/")
 def hello():
     return "Welcome to the store"
 
-
 @app.get("/products")
-def get_all_products():
-    db = session()
-    
-    return db.query(database_models.Product).all()
+def get_all_products(db: Session = Depends(get_db)):
+    all_products = db.query(database_models.Product).all()
+
+    return all_products
 
 @app.get("/products/{id}")
-def get_product_by_id(id: int):
-    for product in products:
-        if product.id == id:
-            return product
+def get_product_by_id(id: int, db: Session = Depends(get_db)):
+    db_product = db.query(database_models.Product).filter(database_models.Product.id == id).first()
     
-    return "Product not found"
-
+    if db_product:
+        return db_product
+    else:
+        return "Product not found"
 
 @app.post("/products")
-def add_product(product: Product):
-    products.append(product)
+def add_product(product: Product, db: Session = Depends(get_db)):
+    db.add(database_models.Product(**product.model_dump()))
+    db.commit()
 
     return "Product Added"
 
+@app.put("/products/{id}")
+def update_product(id: int, product: Product, db: Session = Depends(get_db)):
+    db_product = db.query(database_models.Product).filter(database_models.Product.id == id).first()
+    
+    if db_product is None:
+        return "Id not found"
 
-@app.put("/products")
-def update_product(id: int, product: Product):
-    for i in range(len(products)):
-        if products[i].id == id:
-            products[i] = product
-
-            return "Product Updated"
-
-
-@app.delete("/products")
-def delete_product(id: int):
-    for i in range(len(products)):
-        if products[i].id == id:
-            del products[i]
-            
-            return "Product deleted"
+    # To maintain the original id
+    updated_row_count = db.query(database_models.Product).filter(database_models.Product.id == id).update(product.model_dump())
+    db_product.id = id
+    
+    db.commit()
+    return "Product Updated"
         
 
+@app.delete("/products/{id}")
+def delete_product(id: int, db: Session = Depends(get_db)):
+
+    deleted_row_count = db.query(database_models.Product).filter(database_models.Product.id == id).delete()
+    db.commit()
+
+    return f"{deleted_row_count} Product deleted"
+    
