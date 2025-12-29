@@ -1,11 +1,14 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
-from models import Product
+from models import Product, UserCreate, UserResponse
 from sqlalchemy.orm import Session
+from fastapi.security import OAuth2PasswordRequestForm
+from datetime import timedelta
 
 import database_models
-from database import session, engine
-
+from database import session_maker, engine, get_db
+import auth
+import models
 
 app = FastAPI()
 
@@ -25,16 +28,8 @@ products = [
     Product(id=5, name="laptop", description="gaming laptop", price=75000, quantity=5)
 ]
 
-def get_db():
-    db = session()
-
-    try:
-        yield db
-    finally:
-        db.close
-
 def init_db():
-    db = session()
+    db = session_maker()
 
     count = db.query(database_models.Product).count
 
@@ -53,13 +48,13 @@ def hello():
     return "Welcome to the store"
 
 @app.get("/products")
-def get_all_products(db: Session = Depends(get_db)):
+def get_all_products(user: database_models.User = Depends(auth.get_current_active_user), db: Session = Depends(get_db)):
     all_products = db.query(database_models.Product).all()
 
     return all_products
 
 @app.get("/products/{id}")
-def get_product_by_id(id: int, db: Session = Depends(get_db)):
+def get_product_by_id(id: int, user: database_models.User = Depends(auth.get_current_active_user), db: Session = Depends(get_db)):
     db_product = db.query(database_models.Product).filter(database_models.Product.id == id).first()
     
     if db_product:
@@ -97,3 +92,54 @@ def delete_product(id: int, db: Session = Depends(get_db)):
 
     return f"{deleted_row_count} Product deleted"
     
+
+@app.post("/users")
+def create_user(user: UserCreate, db: Session = Depends(get_db)):
+    db_user = database_models.User (
+        name = user.name,
+        email = user.email,
+        role = user.role,
+    )
+
+    db.add(db_user)
+    db.commit()
+
+    return "User Created"
+
+# Endpoints for user authenication
+
+@app.post("/register", response_model = UserResponse)
+def register_user(user_data: UserCreate, db: Session = Depends(get_db)):
+    old_user = db.query(database_models.User).filter(user_data.email == database_models.User.email).first()
+    if old_user:
+        raise HTTPException (
+            status_code = 401,
+            detail = "User already exists"
+        )
+    
+    hashed_pass = auth.create_hash(user_data.password)
+
+    db_user = database_models.User (
+        name = user_data.name,
+        email = user_data.email,
+        role = user_data.role,
+        hashed_pwd = hashed_pass
+    )
+    db.add(db_user)
+    db.commit()
+
+    return db_user
+
+@app.post("/token", response_model = models.Token)
+def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):    # Depends()
+    user = db.query(database_models.User).filter(database_models.User.email == form_data.username).first()
+
+    if not user or not auth.verify_pwd(form_data.password, user.hashed_pwd):
+        raise HTTPException (
+            status_code = 401,
+            detail = "Incorrect username or password"
+        )
+    
+    access_token = auth.create_access_token({"sub": user.email}, timedelta(minutes=auth.TOKEN_EXPIRE_MINUTES))
+
+    return {"access_token": access_token, "token_type": "bearer"}
