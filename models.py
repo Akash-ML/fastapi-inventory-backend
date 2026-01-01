@@ -19,7 +19,7 @@ class UserResponse(BaseModel):
     name: str 
     email: str
     role: str
-    # is_active = bool
+    is_active: bool
 
 class UserLogin(BaseModel):
     email: str

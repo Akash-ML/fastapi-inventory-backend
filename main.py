@@ -45,11 +45,11 @@ init_db()
 
 @app.get("/")
 def hello():
-    return "Welcome to the store"
+    return "Welcome to the Inventory Tracker"
 
 @app.get("/products")
 def get_all_products(user: database_models.User = Depends(auth.get_current_active_user), db: Session = Depends(get_db)):
-    all_products = db.query(database_models.Product).all()
+    all_products = db.query(database_models.Product).order_by(database_models.Product.id).all()
 
     return all_products
 
@@ -63,14 +63,14 @@ def get_product_by_id(id: int, user: database_models.User = Depends(auth.get_cur
         return "Product not found"
 
 @app.post("/products")
-def add_product(product: Product, db: Session = Depends(get_db)):
+def add_product(product: Product, user: database_models.User = Depends(auth.get_current_active_user), db: Session = Depends(get_db)):
     db.add(database_models.Product(**product.model_dump()))
     db.commit()
 
     return "Product Added"
 
 @app.put("/products/{id}")
-def update_product(id: int, product: Product, db: Session = Depends(get_db)):
+def update_product(id: int, product: Product, user: database_models.User = Depends(auth.get_current_active_user), db: Session = Depends(get_db)):
     db_product = db.query(database_models.Product).filter(database_models.Product.id == id).first()
     
     if db_product is None:
@@ -85,26 +85,12 @@ def update_product(id: int, product: Product, db: Session = Depends(get_db)):
         
 
 @app.delete("/products/{id}")
-def delete_product(id: int, db: Session = Depends(get_db)):
+def delete_product(id: int, user: database_models.User = Depends(auth.get_current_active_user), db: Session = Depends(get_db)):
 
     deleted_row_count = db.query(database_models.Product).filter(database_models.Product.id == id).delete()
     db.commit()
 
     return f"{deleted_row_count} Product deleted"
-    
-
-@app.post("/users")
-def create_user(user: UserCreate, db: Session = Depends(get_db)):
-    db_user = database_models.User (
-        name = user.name,
-        email = user.email,
-        role = user.role,
-    )
-
-    db.add(db_user)
-    db.commit()
-
-    return "User Created"
 
 # Endpoints for user authenication
 
@@ -123,7 +109,8 @@ def register_user(user_data: UserCreate, db: Session = Depends(get_db)):
         name = user_data.name,
         email = user_data.email,
         role = user_data.role,
-        hashed_pwd = hashed_pass
+        hashed_pwd = hashed_pass,
+        is_active = True
     )
     db.add(db_user)
     db.commit()
@@ -131,7 +118,7 @@ def register_user(user_data: UserCreate, db: Session = Depends(get_db)):
     return db_user
 
 @app.post("/token", response_model = models.Token)
-def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):    # Depends()
+def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = db.query(database_models.User).filter(database_models.User.email == form_data.username).first()
 
     if not user or not auth.verify_pwd(form_data.password, user.hashed_pwd):

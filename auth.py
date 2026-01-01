@@ -61,7 +61,7 @@ def verify_token(token: str) -> TokenData:
 # Functions to get the current active user
 
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
-    token_data = verify_token(token)    
+    token_data = verify_token(token)
 
     current_user = db.query(User).filter(User.email == token_data.email).first()
     if current_user is None:
