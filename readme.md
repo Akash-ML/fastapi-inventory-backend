@@ -1,7 +1,7 @@
 ﻿# 📦 Inventory Tracker
 
 **Inventory Tracker** is a side project built to learn and practice **FastAPI backend development**.  
-The project focuses on building a clean REST API with proper database integration, while using a React frontend sourced from an open-source project.
+The project focuses on building a clean REST API with proper database integration and secure user authentication, while using a React frontend sourced from an open-source project.
 
 ---
 
@@ -14,6 +14,7 @@ This project demonstrates:
 * Database interaction using **SQLAlchemy**
 * **PostgreSQL** integration for persistent storage
 * ASGI server implementation via **Uvicorn**
+* Secure user authentication using **JWT** and **OAuth2**.
 
 The React frontend was sourced from an open-source resource and integrated with the backend API.
 
@@ -21,23 +22,29 @@ The React frontend was sourced from an open-source resource and integrated with 
 
 ## ✨ Backend Features
 
-* Route handling for CRUD operations
-* Database connection and session management
-* ORM-based data access layer
-* Middleware configuration
-* Request validation and serialization
-* Automatic API documentation (Swagger & Redoc)
+* Route handling for **CRUD** operations
+* **Database** connection and session management
+* **ORM**-based data access layer
+* **Middleware** configuration
+* Request **validation** and serialization
+* Automatic **API documentation** (Swagger & Redoc)
+* Secure user authentication using **OAuth2 Password Flow**
+* **JWT**-based authentication and authorization
+* **Password hashing** for secure credential storage
+* Protected routes using **dependency injection**
 
 ---
 
 ## 🔗 API Endpoints
 
-* **GET /** – Health check / welcome endpoint
+* **GET /** – Welcome endpoint
 * **GET /products/** – Retrieve all products
 * **GET /products/{product\_id}** – Retrieve product by ID
 * **POST /products/** – Create a new product
 * **PUT /products/{product\_id}** – Update an existing product
 * **DELETE /products/{product\_id}** – Delete a product
+* **POST /register/** - Register a new user
+* **POST /token/** - Login an existing user
 
 ---
 
@@ -92,7 +99,11 @@ uvicorn main:app --reload
 
 ## 📸 Screenshots
 
-![Swagger UI](screenshots/api-docs.png)
+![User Authentication](screenshots/user-authentication-1.png)
+![User Authentication](screenshots/user-authentication-2.png)
+![Swagger UI](screenshots/api-docs-1.png)
+![Swagger UI](screenshots/api-docs-2.png)
+![PostgreSQL Database](screenshots/database.png)
 ![Frontend](screenshots/frontend-ui.png)
 
 ---
@@ -105,6 +116,7 @@ Inventory-Tracker/
 ├── models.py
 ├── database_models.py
 ├── database.py
+├── auth.py
 ├── frontend/
 ├── .gitignore
 └── README.md
@@ -119,7 +131,8 @@ Inventory-Tracker/
 * Designed REST APIs with proper validation
 * Established database connection with a postgresql database
 * Integrated backend APIs with a frontend UI
-* Followed clean project structure and version control pratices with git
+* Introduced secure user authentication and password flow
+* Followed clean project structure and version control practices with git
 
 ---
 
