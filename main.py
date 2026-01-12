@@ -1,14 +1,13 @@
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
-from models import Product, UserCreate, UserResponse
 from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordRequestForm
-from datetime import timedelta
+from datetime import timedelta, datetime, UTC
 
-import database_models
-from database import session_maker, engine, get_db
+from database_models import Product, User
+from database import engine, get_db
 import auth
-import models
+from models import ProductCreate, UserCreate, UserResponse, Token
 
 app = FastAPI()
 
@@ -18,44 +17,22 @@ app.add_middleware(
     allow_methods=["*"]
 )
 
-database_models.Base.metadata.create_all(bind=engine)
-
-products = [
-    Product(id=1, name="phone", description="budget phone", price=15000, quantity=25),
-    Product(id=2, name="phone", description="mid range phone", price=25000, quantity=20),
-    Product(id=3, name="phone", description="premium phone", price=45000, quantity=10),
-    Product(id=4, name="tablet", description="budget tablet", price=18000, quantity=15),
-    Product(id=5, name="laptop", description="gaming laptop", price=75000, quantity=5)
-]
-
-def init_db():
-    db = session_maker()
-
-    count = db.query(database_models.Product).count
-
-    if count == 0:
-        for product in products:
-            db.add(database_models.Product(**product.model_dump()))
-
-        db.commit()
-
-    db.close()
-
-init_db()
+# Removed following line to let Alembic handle table creation
+# database_models.Base.metadata.create_all(bind=engine)
 
 @app.get("/")
 def hello():
     return "Welcome to the Inventory Tracker"
 
 @app.get("/products")
-def get_all_products(user: database_models.User = Depends(auth.get_current_active_user), db: Session = Depends(get_db)):
-    all_products = db.query(database_models.Product).order_by(database_models.Product.id).all()
+def get_all_products(user: User = Depends(auth.get_current_active_user), db: Session = Depends(get_db)):
+    all_products = db.query(Product).order_by(Product.id).all()
 
     return all_products
 
 @app.get("/products/{id}")
-def get_product_by_id(id: int, user: database_models.User = Depends(auth.get_current_active_user), db: Session = Depends(get_db)):
-    db_product = db.query(database_models.Product).filter(database_models.Product.id == id).first()
+def get_product_by_id(id: int, user: User = Depends(auth.get_current_active_user), db: Session = Depends(get_db)):
+    db_product = db.query(Product).filter(Product.id == id).first()
     
     if db_product:
         return db_product
@@ -63,31 +40,41 @@ def get_product_by_id(id: int, user: database_models.User = Depends(auth.get_cur
         return "Product not found"
 
 @app.post("/products")
-def add_product(product: Product, user: database_models.User = Depends(auth.get_current_active_user), db: Session = Depends(get_db)):
-    db.add(database_models.Product(**product.model_dump()))
+def add_product(product: ProductCreate, user: User = Depends(auth.get_current_active_user), db: Session = Depends(get_db)):
+    new_product = Product (
+        name = product.name,
+        description = product.description,
+        price = product.price,
+        quantity = product.quantity,
+        owner_id = user.id
+    ) 
+    
+    db.add(new_product)
     db.commit()
 
     return "Product Added"
 
 @app.put("/products/{id}")
-def update_product(id: int, product: Product, user: database_models.User = Depends(auth.get_current_active_user), db: Session = Depends(get_db)):
-    db_product = db.query(database_models.Product).filter(database_models.Product.id == id).first()
+def update_product(id: int, product: ProductCreate, user: User = Depends(auth.get_current_active_user), db: Session = Depends(get_db)):
+    db_product = db.query(Product).filter(Product.id == id).first()
     
     if db_product is None:
         return "Id not found"
 
-    # To maintain the original id
-    db.query(database_models.Product).filter(database_models.Product.id == id).update(product.model_dump())
-    db_product.id = id
+    db_product.name = product.name
+    db_product.description = product.description
+    db_product.price = product.price
+    db_product.quantity = product.quantity
+    db_product.updated_at = datetime.now(tz=UTC)
     
     db.commit()
     return "Product Updated"
         
 
 @app.delete("/products/{id}")
-def delete_product(id: int, user: database_models.User = Depends(auth.get_current_active_user), db: Session = Depends(get_db)):
+def delete_product(id: int, user: User = Depends(auth.get_current_active_user), db: Session = Depends(get_db)):
 
-    deleted_row_count = db.query(database_models.Product).filter(database_models.Product.id == id).delete()
+    deleted_row_count = db.query(Product).filter(Product.id == id).delete()
     db.commit()
 
     return f"{deleted_row_count} Product deleted"
@@ -96,7 +83,7 @@ def delete_product(id: int, user: database_models.User = Depends(auth.get_curren
 
 @app.post("/register", response_model = UserResponse)
 def register_user(user_data: UserCreate, db: Session = Depends(get_db)):
-    old_user = db.query(database_models.User).filter(user_data.email == database_models.User.email).first()
+    old_user = db.query(User).filter(user_data.email == User.email).first()
     if old_user:
         raise HTTPException (
             status_code = 401,
@@ -105,7 +92,7 @@ def register_user(user_data: UserCreate, db: Session = Depends(get_db)):
     
     hashed_pass = auth.create_hash(user_data.password)
 
-    db_user = database_models.User (
+    db_user = User (
         name = user_data.name,
         email = user_data.email,
         role = user_data.role,
@@ -117,9 +104,9 @@ def register_user(user_data: UserCreate, db: Session = Depends(get_db)):
 
     return db_user
 
-@app.post("/token", response_model = models.Token)
+@app.post("/token", response_model = Token)
 def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    user = db.query(database_models.User).filter(database_models.User.email == form_data.username).first()
+    user = db.query(User).filter(User.email == form_data.username).first()
 
     if not user or not auth.verify_pwd(form_data.password, user.hashed_pwd):
         raise HTTPException (
