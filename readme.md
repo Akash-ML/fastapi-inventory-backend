@@ -14,7 +14,8 @@ This project demonstrates:
 * Database interaction using **SQLAlchemy**
 * **PostgreSQL** integration for persistent storage
 * ASGI server implementation via **Uvicorn**
-* Secure user authentication using **JWT** and **OAuth2**.
+* Secure user authentication using **JWT** and **OAuth2**
+* Version control practices with **Git**
 
 The React frontend was sourced from an open-source resource and integrated with the backend API.
 
