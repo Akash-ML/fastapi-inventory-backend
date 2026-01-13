@@ -1,7 +1,8 @@
 ﻿# 📦 Inventory Tracker
 
 **Inventory Tracker** is a side project built to learn and practice **FastAPI backend development**.  
-The project focuses on building a clean REST API with proper database integration and secure user authentication, while using a React frontend sourced from an open-source project.
+This project is a backend application built using FastAPI that demonstrates real-world backend development practices. It includes secure authentication, role-based authorization, database schema management using Alembic, and structured API design. 
+The project is designed to reflect **production-grade** backend architecture, focusing on scalability, maintainability, and best practices commonly used in industry-level FastAPI applications.
 
 ---
 
@@ -15,9 +16,11 @@ This project demonstrates:
 * **PostgreSQL** integration for persistent storage
 * ASGI server implementation via **Uvicorn**
 * Secure user authentication using **JWT** and **OAuth2**
+* Secure authorization with RBAC(Role Based Access Control)
+* **Alembic** migrations for tracking database schema changes
 * Version control practices with **Git**
 
-The React frontend was sourced from an open-source resource and integrated with the backend API.
+The React frontend was sourced from an open-source resource and integrated with the backend API in early stages of the project. Later the Swagger UI is used for its smooth development experience.
 
 ---
 
@@ -29,10 +32,13 @@ The React frontend was sourced from an open-source resource and integrated with 
 * **Middleware** configuration
 * Request **validation** and serialization
 * Automatic **API documentation** (Swagger & Redoc)
+* **Exception** handling
 * Secure user authentication using **OAuth2 Password Flow**
 * **JWT**-based authentication and authorization
 * **Password hashing** for secure credential storage
 * Protected routes using **dependency injection**
+* Generated **Alembic** migrations for database schema management
+* Secure authorization with **Role Based Access Control**(RBAC)
 
 ---
 
@@ -58,6 +64,7 @@ The React frontend was sourced from an open-source resource and integrated with 
 * SQLAlchemy
 * PostgreSQL
 * Uvicorn
+* Alembic
 
 ### Frontend
 
@@ -119,6 +126,7 @@ Inventory-Tracker/
 ├── database.py
 ├── auth.py
 ├── frontend/
+├── alembic/
 ├── .gitignore
 └── README.md
 ```
@@ -131,8 +139,11 @@ Inventory-Tracker/
 * Implemented dependency injection and middleware
 * Designed REST APIs with proper validation
 * Established database connection with a postgresql database
-* Integrated backend APIs with a frontend UI
+* Implemented CRUD operations with exception handling
+* Integrated backend APIs with a open-source frontend UI
 * Introduced secure user authentication and password flow
+* Introduced user authorization for RBAC and data safety
+* Generated Alembic migrations for safe DB schema evolution
 * Followed clean project structure and version control practices with git
 
 ---
