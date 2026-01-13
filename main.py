@@ -40,7 +40,7 @@ def get_product_by_id(id: int, user: User = Depends(auth.get_current_active_user
         return "Product not found"
 
 @app.post("/products")
-def add_product(product: ProductCreate, user: User = Depends(auth.get_current_active_user), db: Session = Depends(get_db)):
+def add_product(product: ProductCreate, user: User = Depends(auth.require_role("owner")), db: Session = Depends(get_db)):
     new_product = Product (
         name = product.name,
         description = product.description,
@@ -55,11 +55,17 @@ def add_product(product: ProductCreate, user: User = Depends(auth.get_current_ac
     return "Product Added"
 
 @app.put("/products/{id}")
-def update_product(id: int, product: ProductCreate, user: User = Depends(auth.get_current_active_user), db: Session = Depends(get_db)):
+def update_product(id: int, product: ProductCreate, user: User = Depends(auth.require_role("owner")), db: Session = Depends(get_db)):
     db_product = db.query(Product).filter(Product.id == id).first()
     
     if db_product is None:
         return "Id not found"
+
+    if db_product.owner_id != user.id:
+        raise HTTPException (
+            status_code = status.HTTP_403_FORBIDDEN,
+            detail = "Not enough permissions"
+        )
 
     db_product.name = product.name
     db_product.description = product.description
@@ -72,12 +78,22 @@ def update_product(id: int, product: ProductCreate, user: User = Depends(auth.ge
         
 
 @app.delete("/products/{id}")
-def delete_product(id: int, user: User = Depends(auth.get_current_active_user), db: Session = Depends(get_db)):
+def delete_product(id: int, user: User = Depends(auth.require_role("owner")), db: Session = Depends(get_db)):
 
-    deleted_row_count = db.query(Product).filter(Product.id == id).delete()
+    db_product = db.query(Product).filter(Product.id == id).first()
+    if db_product.owner_id != user.id:
+        raise HTTPException (
+            status_code = status.HTTP_403_FORBIDDEN,
+            detail = "Not enough permissions"
+        )
+    
+    if db_product is None:
+        return "Id not found"
+    
+    count = db.query(Product).filter(Product.id == id).delete()
     db.commit()
-
-    return f"{deleted_row_count} Product deleted"
+    
+    return "Product deleted"
 
 # Endpoints for user authenication
 
@@ -90,6 +106,10 @@ def register_user(user_data: UserCreate, db: Session = Depends(get_db)):
             detail = "User already exists"
         )
     
+    user_data.role = user_data.role.lower()
+    if user_data.role not in ["user", "owner"]:
+        user_data.role = "user"
+
     hashed_pass = auth.create_hash(user_data.password)
 
     db_user = User (
@@ -114,6 +134,6 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db:
             detail = "Incorrect username or password"
         )
     
-    access_token = auth.create_access_token({"sub": user.email}, timedelta(minutes=auth.TOKEN_EXPIRE_MINUTES))
+    access_token = auth.create_access_token({"sub": user.email, "role": user.role}, timedelta(minutes=auth.TOKEN_EXPIRE_MINUTES))
 
     return {"access_token": access_token, "token_type": "bearer"}

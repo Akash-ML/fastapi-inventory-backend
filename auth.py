@@ -81,3 +81,16 @@ def get_current_active_user(user: User = Depends(get_current_user)):
     
     return user
 
+# Function to enforce Role Based Access Control(RBAC)
+
+def require_role(*allowed_roles: str): 
+    def dependency(user: User = Depends(get_current_active_user)):
+        if user.role not in allowed_roles:
+            raise HTTPException (
+                status_code = status.HTTP_403_FORBIDDEN,
+                detail = "Not enough permissions"
+            )
+        
+        return user
+    
+    return dependency
