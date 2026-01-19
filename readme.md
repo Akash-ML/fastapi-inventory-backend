@@ -39,6 +39,8 @@ The React frontend was sourced from an open-source resource and integrated with 
 * Protected routes using **dependency injection**
 * Generated **Alembic** migrations for database schema management
 * Secure authorization with **Role Based Access Control**(RBAC)
+* Separate **SQLite** test database is used to isolate test data from development data.
+* **pytest** tests cover authentication, role-based access control, and product-related API endpoints.
 
 ---
 
@@ -65,6 +67,7 @@ The React frontend was sourced from an open-source resource and integrated with 
 * PostgreSQL
 * Uvicorn
 * Alembic
+* pytest
 
 ### Frontend
 
@@ -85,7 +88,7 @@ fastapi-proj\\Scripts\\activate.ps1
 ### 2️⃣ Install dependencies
 
 ```bash
-pip install fastapi uvicorn sqlalchemy psycopg
+pip install -r requirements.txt
 ```
 
 ### 3️⃣ Run the backend server
@@ -104,6 +107,23 @@ uvicorn main:app --reload
 * Frontend: http://localhost:3000
 
 ---
+
+## ⚙️ Testing
+
+* Automated tests written using pytest
+* Integration tests for FastAPI routes and authentication
+* Isolated SQLite test database with transaction rollback
+* Dependency overrides for clean test environments
+
+### Run automated tests
+
+```bash
+pip install -r tests/requirements-test.txt
+```
+
+```bash
+pytest
+```
 
 ## 📸 Screenshots
 
@@ -127,7 +147,13 @@ Inventory-Tracker/
 ├── auth.py
 ├── frontend/
 ├── alembic/
+├── tests/
+    ├── conftest.py
+    ├── test_auth.py
+    ├── test_roles.py
+    ├── requirements-test.py
 ├── .gitignore
+├── requirements.txt
 └── README.md
 ```
 
@@ -144,6 +170,7 @@ Inventory-Tracker/
 * Introduced secure user authentication and password flow
 * Introduced user authorization for RBAC and data safety
 * Generated Alembic migrations for safe DB schema evolution
+* Learned to automate tests using pytest
 * Followed clean project structure and version control practices with git
 
 ---

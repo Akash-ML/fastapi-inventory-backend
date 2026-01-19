@@ -4,10 +4,10 @@ from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordRequestForm
 from datetime import timedelta, datetime, UTC
 
-from database_models import Product, User
+from database_models import Base, Product, User
 from database import engine, get_db
 import auth
-from models import ProductCreate, UserCreate, UserResponse, Token
+from models import ProductCreate, ProductResponse, UserCreate, UserResponse, Token
 
 app = FastAPI()
 
@@ -17,29 +17,32 @@ app.add_middleware(
     allow_methods=["*"]
 )
 
-# Removed following line to let Alembic handle table creation
-# database_models.Base.metadata.create_all(bind=engine)
+Base.metadata.create_all(bind=engine)
 
 @app.get("/")
 def hello():
-    return "Welcome to the Inventory Tracker"
+    return {"message": "Welcome to the Inventory Tracker"}
 
-@app.get("/products")
+@app.get("/products", response_model=list[ProductResponse])
 def get_all_products(user: User = Depends(auth.get_current_active_user), db: Session = Depends(get_db)):
     all_products = db.query(Product).order_by(Product.id).all()
 
     return all_products
 
-@app.get("/products/{id}")
+@app.get("/products/{id}", response_model=ProductResponse)
 def get_product_by_id(id: int, user: User = Depends(auth.get_current_active_user), db: Session = Depends(get_db)):
-    db_product = db.query(Product).filter(Product.id == id).first()
+    db_product = db.get(Product, id)
     
-    if db_product:
-        return db_product
-    else:
-        return "Product not found"
+    if db_product is None:
+        raise HTTPException (
+            status_code = status.HTTP_404_NOT_FOUND,
+            detail = "Product not found"
+        )
 
-@app.post("/products")
+    return db_product
+    
+
+@app.post("/products", response_model=ProductResponse, status_code=status.HTTP_201_CREATED)
 def add_product(product: ProductCreate, user: User = Depends(auth.require_role("owner")), db: Session = Depends(get_db)):
     new_product = Product (
         name = product.name,
@@ -51,15 +54,19 @@ def add_product(product: ProductCreate, user: User = Depends(auth.require_role("
     
     db.add(new_product)
     db.commit()
+    db.refresh(new_product)
 
-    return "Product Added"
+    return new_product
 
-@app.put("/products/{id}")
+@app.put("/products/{id}", response_model=ProductResponse)
 def update_product(id: int, product: ProductCreate, user: User = Depends(auth.require_role("owner")), db: Session = Depends(get_db)):
-    db_product = db.query(Product).filter(Product.id == id).first()
+    db_product = db.get(Product, id)
     
     if db_product is None:
-        return "Id not found"
+        raise HTTPException (
+            status_code = status.HTTP_404_NOT_FOUND,
+            detail = "Product not found"
+        )
 
     if db_product.owner_id != user.id:
         raise HTTPException (
@@ -74,26 +81,31 @@ def update_product(id: int, product: ProductCreate, user: User = Depends(auth.re
     db_product.updated_at = datetime.now(tz=UTC)
     
     db.commit()
-    return "Product Updated"
+    db.refresh(db_product)
+    return db_product
         
 
 @app.delete("/products/{id}")
 def delete_product(id: int, user: User = Depends(auth.require_role("owner")), db: Session = Depends(get_db)):
 
-    db_product = db.query(Product).filter(Product.id == id).first()
+    db_product = db.get(Product, id)
+
+    if db_product is None:
+        raise HTTPException (
+            status_code = status.HTTP_404_NOT_FOUND,
+            detail = "Product not found"
+        )
+
     if db_product.owner_id != user.id:
         raise HTTPException (
             status_code = status.HTTP_403_FORBIDDEN,
             detail = "Not enough permissions"
         )
     
-    if db_product is None:
-        return "Id not found"
-    
-    count = db.query(Product).filter(Product.id == id).delete()
+    db.delete(db_product)
     db.commit()
     
-    return "Product deleted"
+    return {"message": "Product deleted"}
 
 # Endpoints for user authenication
 

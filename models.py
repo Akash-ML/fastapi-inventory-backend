@@ -7,6 +7,13 @@ class ProductCreate(BaseModel):
     price: float
     quantity: int
     
+class ProductResponse(BaseModel):
+    id: int
+    name: str
+    description: str
+    price: float
+    quantity: int
+
 class UserCreate(BaseModel):
     name: str
     email: str 
