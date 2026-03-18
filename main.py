@@ -4,10 +4,10 @@ from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordRequestForm
 from datetime import timedelta, datetime, UTC
 
-from database_models import Base, Product, User
+from database_models import Base, Product, User, Order
 from database import engine, get_db
 import auth
-from models import ProductCreate, ProductResponse, UserCreate, UserResponse, Token
+from models import ProductCreate, ProductResponse, OrderCreate, OrderResponse, UserCreate, UserResponse, Token
 
 app = FastAPI()
 
@@ -57,6 +57,44 @@ def add_product(product: ProductCreate, user: User = Depends(auth.require_role("
     db.refresh(new_product)
 
     return new_product
+
+@app.post("/products/create-order", response_model=OrderResponse, status_code=status.HTTP_201_CREATED)
+def create_order(order: OrderCreate, user: User = Depends(auth.require_role("owner")), db: Session = Depends(get_db)):
+    db_product = db.get(Product, order.product_id)
+    
+    if db_product is None:
+        raise HTTPException (
+            status_code = status.HTTP_404_NOT_FOUND,
+            detail = "Product not found"
+        )
+
+    if db_product.owner_id != user.id:
+        raise HTTPException (
+            status_code = status.HTTP_403_FORBIDDEN,
+            detail = "Not enough permissions"
+        )
+    
+    if db_product.quantity < order.quantity:
+        raise HTTPException (
+            status_code = status.HTTP_409_CONFLICT,
+            detail = "Insufficient product quantity"
+        )
+
+    new_order = Order (
+        user_id = user.id,
+        product_id = order.product_id,
+        quantity = order.quantity
+    )
+
+    db_product.quantity = db_product.quantity - order.quantity
+    db_product.updated_at = datetime.now(tz=UTC)
+
+    db.add(new_order)
+    db.commit()
+    db.refresh(new_order)
+
+    return new_order
+
 
 @app.put("/products/{id}", response_model=ProductResponse)
 def update_product(id: int, product: ProductCreate, user: User = Depends(auth.require_role("owner")), db: Session = Depends(get_db)):

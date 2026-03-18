@@ -20,6 +20,7 @@ class Product(Base):
     updated_at = Column(DateTime, default=datetime.now(tz=UTC), nullable=False)
 
     owner = relationship("User", back_populates="products")
+    orders = relationship("Order", back_populates="product_orders")
     
     __table_args__ = (
         Index("idx_product_name", name),
@@ -38,3 +39,17 @@ class User(Base):
     is_active = Column(Boolean, nullable=False)
 
     products = relationship("Product", back_populates="owner")
+    orders = relationship("Order", back_populates="user_orders")
+
+class Order(Base):
+
+    __tablename__ = "order_items"
+
+    order_id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    product_id = Column(Integer, ForeignKey("product.id"), nullable=False)
+    quantity = Column(Integer, nullable=False)
+    created_at = Column(DateTime, default=datetime.now(tz=UTC), nullable=False)
+
+    user_orders = relationship("User", back_populates="orders")
+    product_orders = relationship("Product", back_populates="orders")

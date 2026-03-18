@@ -125,6 +125,8 @@ pip install -r tests/requirements-test.txt
 pytest
 ```
 
+---
+
 ## 📸 Screenshots
 
 ![User Authentication](screenshots/user-authentication-1.png)
