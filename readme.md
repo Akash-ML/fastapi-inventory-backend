@@ -1,7 +1,7 @@
 ﻿# 📦 Inventory Tracker
 
 **Inventory Tracker** is a side project built to learn and practice **FastAPI backend development**.  
-This project is a backend application built using FastAPI that demonstrates real-world backend development practices. It includes secure authentication, role-based authorization, database schema management using Alembic, and structured API design. 
+This project is a backend application built using FastAPI that demonstrates real-world backend development practices. It includes secure authentication, role-based authorization, database schema management using Alembic, structured API design and also ML inference. 
 The project is designed to reflect **production-grade** backend architecture, focusing on scalability, maintainability, and best practices commonly used in industry-level FastAPI applications.
 
 ---
@@ -18,9 +18,8 @@ This project demonstrates:
 * Secure user authentication using **JWT** and **OAuth2**
 * Secure authorization with RBAC(Role Based Access Control)
 * **Alembic** migrations for tracking database schema changes
+* **ML model** integration for low stock prediction
 * Version control practices with **Git**
-
-The React frontend was sourced from an open-source resource and integrated with the backend API in early stages of the project. Later the Swagger UI is used for its smooth development experience.
 
 ---
 
@@ -30,8 +29,8 @@ The React frontend was sourced from an open-source resource and integrated with 
 * **Database** connection and session management
 * **ORM**-based data access layer
 * **Middleware** configuration
-* Request **validation** and serialization
-* Automatic **API documentation** (Swagger & Redoc)
+* Request **validation**
+* Automatic **API documentation** (Swagger)
 * **Exception** handling
 * Secure user authentication using **OAuth2 Password Flow**
 * **JWT**-based authentication and authorization
@@ -39,8 +38,9 @@ The React frontend was sourced from an open-source resource and integrated with 
 * Protected routes using **dependency injection**
 * Generated **Alembic** migrations for database schema management
 * Secure authorization with **Role Based Access Control**(RBAC)
-* Separate **SQLite** test database is used to isolate test data from development data.
-* **pytest** tests cover authentication, role-based access control, and product-related API endpoints.
+* Separate **SQLite** test database is used to isolate test data from development data
+* **pytest** tests cover authentication, role-based access control, and product-related API endpoints
+* Exposed a **ML model** as endpoint for prediction 
 
 ---
 
@@ -48,18 +48,19 @@ The React frontend was sourced from an open-source resource and integrated with 
 
 * **GET /** – Welcome endpoint
 * **GET /products/** – Retrieve all products
-* **GET /products/{product\_id}** – Retrieve product by ID
+* **GET /products/{id}** – Retrieve product by ID
+* **GET /products/{id}/predict** - Predicts low stock for product
 * **POST /products/** – Create a new product
-* **PUT /products/{product\_id}** – Update an existing product
-* **DELETE /products/{product\_id}** – Delete a product
+* **PUT /products/{id}** – Update an existing product
+* **DELETE /products/{id}** – Delete a product
 * **POST /register/** - Register a new user
 * **POST /token/** - Login an existing user
+* **POST /products/create-order** - Stores order log in table
 
 ---
 
 ## 🛠️ Tech Stack
 
-### Backend
 
 * FastAPI
 * Pydantic
@@ -69,11 +70,6 @@ The React frontend was sourced from an open-source resource and integrated with 
 * Alembic
 * pytest
 
-### Frontend
-
-* React (open-source template)
-* Modified some headers, title, request handler etc.
-
 ---
 
 ## ⚙️ Setup Instructions
@@ -81,8 +77,8 @@ The React frontend was sourced from an open-source resource and integrated with 
 ### 1️⃣ Create \& activate virtual environment
 
 ```bash
-python -m venv fastapi-proj
-fastapi-proj\\Scripts\\activate.ps1
+python -m venv venv
+venv\\Scripts\\activate.ps1
 ```
 
 ### 2️⃣ Install dependencies
@@ -103,8 +99,6 @@ uvicorn main:app --reload
 
 * Backend API: http://localhost:8000
 * Swagger UI: http://localhost:8000/docs
-* ReDoc: http://localhost:8000/redoc
-* Frontend: http://localhost:3000
 
 ---
 
@@ -127,14 +121,53 @@ pytest
 
 ---
 
+## 🤖 Machine Learning Integration
+
+This project includes a machine learning component to predict low-stock risk for products.
+
+### 🔍 Overview
+
+A **Random Forest classifier** is used to estimate whether a product is likely to run out of stock based on key inventory features.
+The model is trained on **synthetic but realistic data** distributions.
+**Feature engineering** is performed at request time using live database data.
+
+Check out my [low stock prediction repo](https://github.com/Akash-ML/low-stock-prediction).
+
+### 📊 Features Used
+
+* Quantity – Current inventory level
+* Average Daily Sales – Computed from the last 30 days of order logs
+* Days to Restock – Supplier lead time
+* Price – Product price
+
+avg_daily_sales is dynamically derived using aggregated order data:
+```
+Sum of quantities sold in the last 30 days / Divided by 30 
+```
+
+### ⚙️ Prediction Endpoint
+```
+GET /products/{product_id}/predict
+```
+
+* Requires owner role (RBAC enforced)
+* Computes features in real-time from database
+* Returns model prediction
+* Example Response
+```
+{
+  "product_id": 1,
+  "low_stock_risk": true
+}
+```
+---
+
 ## 📸 Screenshots
 
-![User Authentication](screenshots/user-authentication-1.png)
-![User Authentication](screenshots/user-authentication-2.png)
+![User Authentication](screenshots/user-authentication.png)
 ![Swagger UI](screenshots/api-docs-1.png)
-![Swagger UI](screenshots/api-docs-2.png)
-![PostgreSQL Database](screenshots/database.png)
-![Frontend](screenshots/frontend-ui.png)
+![GET Products endpoint](screenshots/api-docs-2.png)
+![User and Product Database](screenshots/database.png)
 
 ---
 
@@ -147,13 +180,16 @@ Inventory-Tracker/
 ├── database_models.py
 ├── database.py
 ├── auth.py
-├── frontend/
 ├── alembic/
 ├── tests/
     ├── conftest.py
     ├── test_auth.py
     ├── test_roles.py
     ├── requirements-test.py
+├── ml/
+    ├── model.py
+    ├── inference.py
+    ├── model.pkl
 ├── .gitignore
 ├── requirements.txt
 └── README.md
@@ -168,17 +204,15 @@ Inventory-Tracker/
 * Designed REST APIs with proper validation
 * Established database connection with a postgresql database
 * Implemented CRUD operations with exception handling
-* Integrated backend APIs with a open-source frontend UI
 * Introduced secure user authentication and password flow
 * Introduced user authorization for RBAC and data safety
 * Generated Alembic migrations for safe DB schema evolution
 * Learned to automate tests using pytest
+* Integrated a machine learning model as a prediction API endpoint
 * Followed clean project structure and version control practices with git
 
 ---
 
 ## 📄 License \& Credits
 
-* Frontend UI adapted from an open-source React project
-* Developed backend for learning purposes
-
+* Developed for learning purposes
