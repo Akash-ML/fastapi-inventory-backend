@@ -11,3 +11,7 @@ python-multipart==0.0.21
 pwdlib==0.3.0
 PyJWT==2.10.1
 argon2-cffi
+
+joblib==1.5.3
+scikit-learn==1.8.0
+pandas==3.0.1

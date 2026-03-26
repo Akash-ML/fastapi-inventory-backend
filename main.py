@@ -9,6 +9,8 @@ from database import engine, get_db
 import auth
 from models import ProductCreate, ProductResponse, OrderCreate, OrderResponse, UserCreate, UserResponse, Token
 
+from ml.inference import build_features, predict_low_stock
+
 app = FastAPI()
 
 app.add_middleware(
@@ -144,6 +146,30 @@ def delete_product(id: int, user: User = Depends(auth.require_role("owner")), db
     db.commit()
     
     return {"message": "Product deleted"}
+
+
+# Endpoint for ML inference
+
+@app.get("/products/{id}/predict")
+def predict_stock(
+    id: int,
+    user: User = Depends(auth.require_role("owner")),
+    db: Session = Depends(get_db),
+):
+    product = db.query(Product).get(id)
+
+    if not product:
+        raise HTTPException(404, "Product not found")
+
+    features = build_features(product, db)
+
+    prediction = predict_low_stock(features)[0]
+
+    return {
+        "product_id": product.id,
+        "low_stock_risk": bool(prediction),
+    }
+
 
 # Endpoints for user authenication
 
