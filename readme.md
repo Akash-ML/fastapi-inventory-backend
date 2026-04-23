@@ -98,9 +98,12 @@ uvicorn main:app --reload --env-file .env
 ```
 
 ### Example .env file:
+
+```.env
 DATABASE_URL=postgresql://username:password@localhost:5432/appname
 SECRET_KEY=aaf318be2283aac0c0ca9fa68594b3ed887ecea1412e0d2a439730653874c140
 MODEL_PATH=ml/model.pkl
+```
 
 ---
 
