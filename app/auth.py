@@ -3,14 +3,15 @@ from fastapi.security import OAuth2PasswordBearer
 from typing import Optional
 from datetime import timedelta, datetime
 import jwt
-from models import Token, TokenData
+from app.models import Token, TokenData
 from fastapi import HTTPException, status, Depends
 from sqlalchemy.orm import Session
-from database import get_db
-from database_models import User
+from app.database import get_db
+from app.database_models import User
 
+from app.config import settings
 
-SECRET_KEY = "aaf318be2283aac0c0ca9fa68594b3ed887ecea1412e0d2a439730653874c140"
+SECRET_KEY = settings.secret_key
 ALGORITHM = "HS256"
 TOKEN_EXPIRE_MINUTES = 30
 

@@ -1,10 +1,10 @@
-from ml.model import model
-
-from database_models import Order
+from app.database_models import Order
 
 from sqlalchemy import func
 from datetime import datetime, timedelta, UTC
 import pandas as pd
+
+from fastapi import Request
 
 def get_avg_daily_sales(db, product_id: int):
     cutoff_date = datetime.now(tz=UTC) - timedelta(days=30)
@@ -35,7 +35,8 @@ def build_features(product, db):
 
     return pd.DataFrame(new_features, columns=["quantity", "avg_daily_sales", "days_to_restock", "price"])
 
-def predict_low_stock(features: list):
+def predict_low_stock(features: list, request: Request):
+    model = request.app.state.model
     prediction = model.predict(features)
 
     return prediction

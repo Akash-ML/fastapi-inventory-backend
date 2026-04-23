@@ -2,10 +2,10 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from fastapi.testclient import TestClient
 
-from database_models import Base, User
-from main import app
-from database import get_db
-from auth import create_hash
+from app.database_models import Base, User
+from app.main import app
+from app.database import get_db
+from app.auth import create_hash
 
 import pytest, httpx
 

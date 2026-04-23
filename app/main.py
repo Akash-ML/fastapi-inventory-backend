@@ -4,14 +4,26 @@ from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordRequestForm
 from datetime import timedelta, datetime, UTC
 
-from database_models import Base, Product, User, Order
-from database import engine, get_db
-import auth
-from models import ProductCreate, ProductResponse, OrderCreate, OrderResponse, UserCreate, UserResponse, Token
+from app.database_models import Base, Product, User, Order
+from app.database import engine, get_db
+import app.auth as auth
+from app.models import ProductCreate, ProductResponse, OrderCreate, OrderResponse, UserCreate, UserResponse, Token
 
+from ml.model import load_model
 from ml.inference import build_features, predict_low_stock
 
-app = FastAPI()
+from fastapi import Request
+
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    Base.metadata.create_all(bind=engine)  
+    app.state.model = load_model()
+
+    yield
+
+app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -153,6 +165,7 @@ def delete_product(id: int, user: User = Depends(auth.require_role("owner")), db
 @app.get("/products/{id}/predict")
 def predict_stock(
     id: int,
+    request: Request,
     user: User = Depends(auth.require_role("owner")),
     db: Session = Depends(get_db),
 ):
@@ -163,7 +176,7 @@ def predict_stock(
 
     features = build_features(product, db)
 
-    prediction = predict_low_stock(features)[0]
+    prediction = predict_low_stock(features, request)[0]
 
     return {
         "product_id": product.id,

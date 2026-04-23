@@ -1,5 +1,5 @@
 from .conftest import create_user, get_token
-from database_models import Product
+from app.database_models import Product
 
 def test_user_cannot_create_product(client, db):
     create_user(db, "akash", "akash@gmail.com", "123", "user")
