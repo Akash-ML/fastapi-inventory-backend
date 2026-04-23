@@ -100,7 +100,7 @@ uvicorn main:app --reload --env-file .env
 ### Example .env file:
 
 ```.env
-DATABASE_URL=postgresql://username:password@localhost:5432/appname
+DATABASE_URL=postgresql://username:password@localhost:5432/dbname
 SECRET_KEY=aaf318be2283aac0c0ca9fa68594b3ed887ecea1412e0d2a439730653874c140
 MODEL_PATH=ml/model.pkl
 ```
@@ -192,10 +192,21 @@ http://localhost:10000
 
 Environment variables are managed using a .env.docker file and passed to containers at runtime.
 
+### Example .env.docker file:
+
+```.env.docker
+DATABASE_URL=postgresql://username:password@localhost:5432/dbname
+SECRET_KEY=aaf318be2283aac0c0ca9fa68594b3ed887ecea1412e0d2a439730653874c140
+MODEL_PATH=ml/model.pkl
+POSTGRES_USER=username
+POSTGRES_PASSWORD=password
+POSTGRES_DB=dbname
+```
+
 ### ☁️ Deployment (Render)
-* The app is deployed using Docker deployment on Render
+* The app is deployed on Render Web Service along with Postgres Service
 * Required environment variables are set in the Render dashboard
-* Created a PostgreSQL database instance for production
+* Created a PostgreSQL Free database instance for production (expires in 30 days)
 
 Check out the [API](https://inventory-tracker-pr3b.onrender.com/docs)
 
