@@ -1,9 +1,11 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-url = "postgresql://postgres:2005@localhost:5432/fastapi-app"
+from app.config import settings
 
-engine = create_engine(url)
+DB_URL = settings.database_url
+
+engine = create_engine(DB_URL)
 
 session_maker = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

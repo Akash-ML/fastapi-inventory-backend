@@ -1,7 +1,7 @@
 ﻿# 📦 Inventory Tracker
 
-**Inventory Tracker** is a side project built to learn and practice **FastAPI backend development**.  
-This project is a backend application built using FastAPI that demonstrates real-world backend development practices. It includes secure authentication, role-based authorization, database schema management using Alembic, structured API design and also ML inference. 
+**Inventory Tracker** is a side project that I built to learn and practice **FastAPI backend development**.  
+This project is a backend application built using FastAPI that demonstrates real-world backend development practices. It includes secure authentication, role-based authorization, database schema management using Alembic and structured API design, ML inference and deployment. 
 The project is designed to reflect **production-grade** backend architecture, focusing on scalability, maintainability, and best practices commonly used in industry-level FastAPI applications.
 
 ---
@@ -19,6 +19,8 @@ This project demonstrates:
 * Secure authorization with RBAC(Role Based Access Control)
 * **Alembic** migrations for tracking database schema changes
 * **ML model** integration for low stock prediction
+* Containerized with **Docker**
+* Deployed on **Render**
 * Version control practices with **Git**
 
 ---
@@ -41,6 +43,7 @@ This project demonstrates:
 * Separate **SQLite** test database is used to isolate test data from development data
 * **pytest** tests cover authentication, role-based access control, and product-related API endpoints
 * Exposed a **ML model** as endpoint for prediction 
+* **Multi-container setup** using Docker Compose
 
 ---
 
@@ -69,10 +72,11 @@ This project demonstrates:
 * Uvicorn
 * Alembic
 * pytest
+* Docker
 
 ---
 
-## ⚙️ Setup Instructions
+## ⚙️ Setup Instructions (Local)
 
 ### 1️⃣ Create \& activate virtual environment
 
@@ -90,7 +94,7 @@ pip install -r requirements.txt
 ### 3️⃣ Run the backend server
 
 ```bash
-uvicorn main:app --reload
+uvicorn main:app --reload --env-file .env
 ```
 
 ---
@@ -162,6 +166,31 @@ GET /products/{product_id}/predict
 ```
 ---
 
+## 🐳 Docker & Deployment
+
+The application is containerized using Docker and can be run locally. Also is deployed on Render platform.
+
+### Run with Docker
+```
+docker-compose up --build
+```
+
+### Access the API at:
+```
+http://localhost:10000
+```
+
+### ⚙️ Environment Variables
+
+Environment variables are managed using a .env.docker file and passed to containers at runtime.
+
+### ☁️ Deployment (Render)
+* The app is deployed using Docker deployment on Render
+* Required environment variables are set in the Render dashboard
+* Created a PostgreSQL database instance for production
+
+---
+
 ## 📸 Screenshots
 
 ![User Authentication](screenshots/user-authentication.png)
@@ -175,12 +204,13 @@ GET /products/{product_id}/predict
 
 ```
 Inventory-Tracker/
-├── main.py
-├── models.py
-├── database_models.py
-├── database.py
-├── auth.py
-├── alembic/
+├── app/
+    ├── main.py
+    ├── models.py
+    ├── database_models.py
+    ├── database.py
+    ├── auth.py
+    ├── config.py
 ├── tests/
     ├── conftest.py
     ├── test_auth.py
@@ -190,6 +220,10 @@ Inventory-Tracker/
     ├── model.py
     ├── inference.py
     ├── model.pkl
+├── alembic/
+├── Dockerfile
+├── docker-compose.yml
+├── .dockerignore
 ├── .gitignore
 ├── requirements.txt
 └── README.md
