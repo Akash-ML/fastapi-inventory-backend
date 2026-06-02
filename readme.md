@@ -1,4 +1,4 @@
-﻿# 📦 Inventory Tracker
+﻿﻿# 📦 Inventory Tracker
 
 **Inventory Tracker** is a side project that I built to learn and practice **FastAPI backend development**.  
 This project is a backend application built using FastAPI that demonstrates real-world backend development practices. It includes secure authentication, role-based authorization, database schema management using Alembic and structured API design, ML inference and deployment. 
@@ -242,6 +242,8 @@ Inventory-Tracker/
     ├── inference.py
     ├── model.pkl
 ├── alembic/
+├── .env
+├── .env.docker
 ├── Dockerfile
 ├── docker-compose.yml
 ├── .dockerignore
