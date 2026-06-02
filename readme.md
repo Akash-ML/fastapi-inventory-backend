@@ -1,4 +1,4 @@
-﻿# 📦 Inventory Tracker
+﻿﻿# 📦 Inventory Tracker
 
 **Inventory Tracker** is a side project that I built to learn and practice **FastAPI backend development**.  
 This project is a backend application built using FastAPI that demonstrates real-world backend development practices. It includes secure authentication, role-based authorization, database schema management using Alembic and structured API design, ML inference and deployment. 
@@ -44,7 +44,7 @@ This project demonstrates:
 * **pytest** tests cover authentication, role-based access control, and product-related API endpoints
 * Exposed a **ML model** as endpoint for prediction 
 * **Multi-container setup** using Docker Compose
-
+* **Deployed live** on Render Free Web Service
 ---
 
 ## 🔗 API Endpoints
@@ -95,6 +95,14 @@ pip install -r requirements.txt
 
 ```bash
 uvicorn main:app --reload --env-file .env
+```
+
+### Example .env file:
+
+```.env
+DATABASE_URL=postgresql://username:password@localhost:5432/dbname
+SECRET_KEY=aaf318be2283aac0c0ca9fa68594b3ed887ecea1412e0d2a439730653874c140
+MODEL_PATH=ml/model.pkl
 ```
 
 ---
@@ -184,10 +192,23 @@ http://localhost:10000
 
 Environment variables are managed using a .env.docker file and passed to containers at runtime.
 
+### Example .env.docker file:
+
+```.env.docker
+DATABASE_URL=postgresql://username:password@localhost:5432/dbname
+SECRET_KEY=aaf318be2283aac0c0ca9fa68594b3ed887ecea1412e0d2a439730653874c140
+MODEL_PATH=ml/model.pkl
+POSTGRES_USER=username
+POSTGRES_PASSWORD=password
+POSTGRES_DB=dbname
+```
+
 ### ☁️ Deployment (Render)
-* The app is deployed using Docker deployment on Render
+* The app is deployed on Render Web Service along with Postgres Service
 * Required environment variables are set in the Render dashboard
-* Created a PostgreSQL database instance for production
+* Created a PostgreSQL Free database instance for production (expires in 30 days)
+
+Check out the [API](https://inventory-tracker-pr3b.onrender.com/docs)
 
 ---
 
@@ -221,6 +242,8 @@ Inventory-Tracker/
     ├── inference.py
     ├── model.pkl
 ├── alembic/
+├── .env
+├── .env.docker
 ├── Dockerfile
 ├── docker-compose.yml
 ├── .dockerignore
@@ -243,6 +266,8 @@ Inventory-Tracker/
 * Generated Alembic migrations for safe DB schema evolution
 * Learned to automate tests using pytest
 * Integrated a machine learning model as a prediction API endpoint
+* Containerized the app using Docker
+* Deployed the webpage live on Render 
 * Followed clean project structure and version control practices with git
 
 ---
